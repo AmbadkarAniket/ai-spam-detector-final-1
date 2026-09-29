@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered spam message detector using machine learning. Check whether a message is spam or not spam with confidence scores.">
+    <title>AI Spam Message Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Ambient background blobs for visual depth -->
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+
+    <main class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="logo-icon">
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="36" height="36" rx="10" fill="url(#logo-gradient)"/>
+                    <path d="M10 14L18 19L26 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <rect x="8" y="11" width="20" height="14" rx="3" stroke="white" stroke-width="2"/>
+                    <circle cx="27" cy="11" r="4" fill="#FF6B6B" stroke="white" stroke-width="1.5"/>
+                    <defs>
+                        <linearGradient id="logo-gradient" x1="0" y1="0" x2="36" y2="36">
+                            <stop stop-color="#6C63FF"/>
+                            <stop offset="1" stop-color="#4ECDC4"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1>AI Spam Message Detector</h1>
+            <p class="subtitle">Check whether a message looks like spam using machine learning.</p>
+        </header>
+
+        <!-- Main Card -->
+        <section class="card" id="detector-card">
+            <!-- Textarea for the message -->
+            <label for="message-input" class="input-label">Enter a message to check:</label>
+            <textarea
+                id="message-input"
+                class="message-textarea"
+                placeholder="Paste or type a message here…&#10;&#10;Example: Congratulations! You won a free iPhone! Click here to claim..."
+                rows="5"
+                maxlength="5000"
+            ></textarea>
+            <div class="char-count" id="char-count">0 / 5000</div>
+
+            <!-- Action Buttons -->
+            <div class="button-group">
+                <button id="check-btn" class="btn btn-primary" type="button">
+                    <span class="btn-text">Check Message</span>
+                    <span class="btn-spinner" aria-hidden="true"></span>
+                </button>
+                <button id="clear-btn" class="btn btn-secondary" type="button">
+                    Clear
+                </button>
+            </div>
+
+            <!-- Result Section (hidden initially) -->
+            <div id="result-section" class="result-section hidden">
+                <div id="result-card" class="result-card">
+                    <div class="result-badge" id="result-badge">
+                        <span id="result-icon" class="result-icon"></span>
+                        <span id="result-label" class="result-label"></span>
+                    </div>
+                    <div class="confidence-wrapper">
+                        <span class="confidence-text">Confidence</span>
+                        <div class="confidence-bar-track">
+                            <div class="confidence-bar-fill" id="confidence-bar"></div>
+                        </div>
+                        <span class="confidence-value" id="confidence-value"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Section (hidden initially) -->
+            <div id="error-section" class="error-section hidden">
+                <div class="error-card">
+                    <span class="error-icon">⚠️</span>
+                    <span id="error-message" class="error-message"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
