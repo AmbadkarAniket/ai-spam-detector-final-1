@@ -3,16 +3,26 @@
  *
  * This script handles:
  * 1. Reading the message from the textarea.
- * 2. Sending the message to the Flask API via fetch().
- * 3. Displaying the prediction (Spam / Not Spam) and confidence score.
- * 4. Showing loading, error, and result states.
- * 5. A clear button to reset the form.
+ * 2. Sending the message to the Flask API on Render.
+ * 3. Displaying the prediction and confidence score.
+ * 4. Showing loading and error states.
+ * 5. Clearing the form.
  */
+
+
+// ---------------------------------------------------------------
+// BACKEND URL
+// ---------------------------------------------------------------
+
+// Default to the same origin as the Flask app so it works in local
+// development without editing this file. You can override it if needed.
+
+const API_URL = window.location.origin || "http://127.0.0.1:5000";
+
 
 // ---------------------------------------------------------------
 // GRAB REFERENCES TO HTML ELEMENTS
 // ---------------------------------------------------------------
-// We get these once so we don't have to search for them every time.
 
 const messageInput   = document.getElementById('message-input');
 const charCount      = document.getElementById('char-count');
@@ -32,157 +42,262 @@ const errorMessage   = document.getElementById('error-message');
 // ---------------------------------------------------------------
 // CHARACTER COUNTER
 // ---------------------------------------------------------------
-// Update the character count below the textarea as the user types.
 
 messageInput.addEventListener('input', () => {
+
     const length = messageInput.value.length;
+
     charCount.textContent = `${length} / 5000`;
+
 });
 
 
 // ---------------------------------------------------------------
-// CHECK MESSAGE BUTTON — Main action
+// CHECK MESSAGE BUTTON
 // ---------------------------------------------------------------
 
 checkBtn.addEventListener('click', async () => {
-    // Step 1: Read the message
+
+    // Read the message entered by the user.
     const message = messageInput.value.trim();
 
-    // Step 2: Don't submit if the message is empty
+
+    // Don't continue if the message is empty.
     if (!message) {
+
         showError('Please enter a message to check.');
+
         messageInput.focus();
+
         return;
     }
 
-    // Step 3: Show loading state
+
+    // Show loading state.
     setLoading(true);
+
     hideResults();
+
     hideError();
 
+
     try {
-        // Step 4: Send the message to our Flask API
-        const response = await fetch('/predict', {
+
+        // -------------------------------------------------------
+        // SEND MESSAGE TO RENDER BACKEND
+        // -------------------------------------------------------
+
+        const response = await fetch(`${API_URL}/predict`, {
+
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: message })
+
+            headers: {
+                'Content-Type': 'application/json'
+            },
+
+            body: JSON.stringify({
+                message: message
+            })
+
         });
 
-        // Step 5: Parse the JSON response from the server
+
+        // Convert server response into JSON.
         const data = await response.json();
 
-        // Step 6: Check if the server returned an error
+
+        // Check if backend returned an error.
         if (!response.ok || data.error) {
-            showError(data.error || 'Something went wrong. Please try again.');
+
+            showError(
+                data.error ||
+                'Something went wrong. Please try again.'
+            );
+
             return;
         }
 
-        // Step 7: Display the prediction result
-        showResult(data.prediction, data.confidence);
+
+        // Display the prediction.
+        showResult(
+            data.prediction,
+            data.confidence
+        );
+
 
     } catch (err) {
-        // Step 8: Handle network or unexpected errors
+
+        // Show error in browser console.
         console.error('Fetch error:', err);
-        showError('Could not connect to the server. Make sure the Flask app is running.');
+
+
+        // Display user-friendly error.
+        showError(
+            'Could not connect to the server. Please check the Render backend.'
+        );
+
+
     } finally {
-        // Always remove the loading state when done
+
+        // Remove loading state.
         setLoading(false);
+
     }
+
 });
 
 
 // ---------------------------------------------------------------
-// CLEAR BUTTON — Reset everything
+// CLEAR BUTTON
 // ---------------------------------------------------------------
 
 clearBtn.addEventListener('click', () => {
+
     messageInput.value = '';
+
     charCount.textContent = '0 / 5000';
+
     hideResults();
+
     hideError();
+
     messageInput.focus();
+
 });
 
 
 // ---------------------------------------------------------------
-// ALLOW CTRL+ENTER TO SUBMIT
+// CTRL + ENTER TO CHECK MESSAGE
 // ---------------------------------------------------------------
 
 messageInput.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+
+    if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key === 'Enter'
+    ) {
+
         checkBtn.click();
+
     }
+
 });
 
 
 // ---------------------------------------------------------------
-// HELPER FUNCTIONS
+// SHOW RESULT
 // ---------------------------------------------------------------
 
-/**
- * Show the prediction result in the UI.
- * @param {string} prediction - "Spam" or "Not Spam"
- * @param {number} confidence - Confidence percentage (e.g. 97.42)
- */
 function showResult(prediction, confidence) {
-    // Determine if the message is spam or safe
-    const isSpam = prediction.toLowerCase().includes('spam') &&
-                   !prediction.toLowerCase().includes('not');
 
-    // Set the correct visual state (colors, icons)
-    resultCard.className = 'result-card ' + (isSpam ? 'spam' : 'safe');
-    resultIcon.textContent = isSpam ? '🚫' : '✅';
+    // Convert prediction to lowercase for checking.
+    const predictionText = prediction.toLowerCase();
+
+
+    // Check whether prediction is Spam.
+    const isSpam =
+        predictionText.includes('spam') &&
+        !predictionText.includes('not');
+
+
+    // Set the result card style.
+    resultCard.className =
+        'result-card ' +
+        (isSpam ? 'spam' : 'safe');
+
+
+    // Set result icon.
+    resultIcon.textContent =
+        isSpam ? '🚫' : '✅';
+
+
+    // Set result text.
     resultLabel.textContent = prediction;
 
-    // Show the confidence percentage
-    confidenceVal.textContent = `${confidence}%`;
 
-    // Show the section
+    // Display confidence.
+    confidenceVal.textContent =
+        `${confidence}%`;
+
+
+    // Show result section.
     resultSection.classList.remove('hidden');
 
-    // Animate the confidence bar (slight delay for visual effect)
+
+    // Start confidence bar from 0%.
     confidenceBar.style.width = '0%';
+
+
+    // Animate confidence bar.
     requestAnimationFrame(() => {
+
         requestAnimationFrame(() => {
-            confidenceBar.style.width = `${confidence}%`;
+
+            confidenceBar.style.width =
+                `${confidence}%`;
+
         });
+
     });
+
 }
 
-/**
- * Hide the result section.
- */
+
+// ---------------------------------------------------------------
+// HIDE RESULTS
+// ---------------------------------------------------------------
+
 function hideResults() {
+
     resultSection.classList.add('hidden');
+
     confidenceBar.style.width = '0%';
+
 }
 
-/**
- * Show an error message.
- * @param {string} message - The error text to display
- */
+
+// ---------------------------------------------------------------
+// SHOW ERROR
+// ---------------------------------------------------------------
+
 function showError(message) {
+
     errorMessage.textContent = message;
+
     errorSection.classList.remove('hidden');
+
 }
 
-/**
- * Hide the error section.
- */
+
+// ---------------------------------------------------------------
+// HIDE ERROR
+// ---------------------------------------------------------------
+
 function hideError() {
+
     errorSection.classList.add('hidden');
+
 }
 
-/**
- * Toggle the loading state on the Check button.
- * @param {boolean} isLoading - true to show spinner, false to show text
- */
+
+// ---------------------------------------------------------------
+// LOADING STATE
+// ---------------------------------------------------------------
+
 function setLoading(isLoading) {
+
     if (isLoading) {
+
         checkBtn.classList.add('loading');
+
         checkBtn.disabled = true;
+
     } else {
+
         checkBtn.classList.remove('loading');
+
         checkBtn.disabled = false;
+
     }
+
 }
